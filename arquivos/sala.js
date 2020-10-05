@@ -80,6 +80,16 @@ adicionarListeners = () => {
     atualizarLista(roster);
   });
 
+  socket.on("trocar-nick", (usuarioOld, usuarioNew, roster) => {
+    listaMensagens.innerHTML +=
+      "<li class='aviso'>" +
+      usuarioOld +
+      " trocou o nick para " +
+      usuarioNew +
+      "</li>";
+    atualizarLista(roster);
+  });
+
   window.addEventListener("beforeunload", (event) => {
     socket.emit("user-logout", idSala, usuario.nick);
   });
@@ -96,7 +106,9 @@ enviarMensagem = (event) => {
   );
 
   listaMensagens.innerHTML +=
-    "<li class='propria-mensagem'>" + "<div>Você diz:</div>" + formularioElementos["mensagem"].value + "</li>";
+    "<li class='propria-mensagem'><div>Você diz:</div>" +
+    formularioElementos["mensagem"].value +
+    "</li>";
 
   listaMensagens.scrollTop = listaMensagens.scrollHeight;
 
@@ -107,7 +119,7 @@ atualizarLista = (usuarios) => {
   listaPessoas.innerHTML = "";
   usuarios.map((usuarioNick) => {
     if (usuario.nick === usuarioNick) {
-      listaPessoas.innerHTML += "<li>" + usuarioNick + " (você)</li>";
+      listaPessoas.innerHTML += "<li>" + usuarioNick + " (você) <button onclick='trocarNick()'>Trocar Nick</button></li>";
     } else {
       listaPessoas.innerHTML += "<li>" + usuarioNick + "</li>";
     }
@@ -120,4 +132,15 @@ sair = () => {
 
 limparChat = () => {
   listaMensagens.innerHTML = "";
+};
+
+
+trocarNick = () => {
+  const nickAntigo = usuario.nick;
+
+  usuario.nick = 'teste';
+  editarUsuario(usuario);
+
+  socket.emit("trocar-nick", idSala, nickAntigo, 'teste');
+  
 };

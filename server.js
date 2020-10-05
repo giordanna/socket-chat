@@ -83,6 +83,20 @@ configuraListeners = (socket) => {
     });
   });
 
+  socket.on("trocar-nick", (sala, usuarioOld, usuarioNew) => {
+    const index = salas[sala].usuarios.findIndex((id) => id === usuarioOld);
+    if (index !== -1) {
+      salas[sala].usuarios[index] = usuarioNew;
+
+      io.to(sala).emit(
+        "trocar-nick",
+        usuarioOld,
+        usuarioNew,
+        Object.values(salas[sala].usuarios)
+      );
+    }
+  });
+
   socket.on("mensagem", (sala, mensagem, usuario) => {
     socket.to(sala).emit("mensagem", mensagem, usuario);
   });
