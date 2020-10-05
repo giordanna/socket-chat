@@ -2,6 +2,10 @@ const express = require("express");
 const app = express();
 const http = require("http").createServer(app);
 const io = require("socket.io")(http);
+
+const redisAdapter = require('socket.io-redis');
+io.adapter(redisAdapter({ host: 'localhost', port: 6379 }));
+
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json()); // to support JSON-encoded bodies
@@ -17,10 +21,7 @@ const salas = {
 io.use((socket, next) => {
   let query = socket.handshake.query;
 
-  if (
-    salas[query.sala] &&
-    salas[query.sala].senha === query.senha
-  ) {
+  if (salas[query.sala] && salas[query.sala].senha === query.senha) {
     const index = salas[query.sala].usuarios.findIndex(
       (id) => id === query.usuario
     );
@@ -46,6 +47,11 @@ io.use((socket, next) => {
 
 io.on("connection", (socket) => {
   console.log("user connected", socket.id, socket.handshake.query);
+
+  configuraListeners(socket);
+});
+
+configuraListeners = (socket) => {
 
   socket.on("disconnect", () => {
     console.log("user disconnected", socket.id, socket.handshake.query);
@@ -78,9 +84,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("mensagem", (sala, mensagem, usuario) => {
-    io.to(sala).emit("mensagem", mensagem, usuario);
+    socket.to(sala).emit("mensagem", mensagem, usuario);
   });
-});
+};
 
 // servindo os arquivos estáticos
 app.use("/static", express.static("arquivos"));

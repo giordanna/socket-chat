@@ -28,6 +28,7 @@ init = () => {
   if (sala) {
     try {
       socket = io({
+        transports: ["websocket"],
         query: {
           usuario: usuario.nick,
           sala: sala.id,
@@ -62,24 +63,20 @@ init = () => {
 adicionarListeners = () => {
   socket.on("mensagem", (mensagem, usuarioNick) => {
     listaMensagens.innerHTML +=
-      "<li>" + 
-      "<div>" + (usuarioNick === usuario.nick ? 'Você' : usuarioNick) + " diz:</div>" +
-      mensagem + "</li>";
+      "<li><div>" + usuarioNick + " diz:</div>" + mensagem + "</li>";
+
+    listaMensagens.scrollTop = listaMensagens.scrollHeight;
   });
 
   socket.on("user-login", (usuarioNick, roster) => {
     listaMensagens.innerHTML +=
-      "<li class='aviso'>" + 
-      usuarioNick + " entrou na sala"
-      +"</li>";
+      "<li class='aviso'>" + usuarioNick + " entrou na sala" + "</li>";
     atualizarLista(roster);
   });
 
   socket.on("user-logout", (usuarioNick, roster) => {
     listaMensagens.innerHTML +=
-      "<li class='aviso'>" + 
-      usuarioNick + " saiu na sala"
-      +"</li>";
+      "<li class='aviso'>" + usuarioNick + " saiu na sala" + "</li>";
     atualizarLista(roster);
   });
 
@@ -97,6 +94,12 @@ enviarMensagem = (event) => {
     formularioElementos["mensagem"].value,
     usuario.nick
   );
+
+  listaMensagens.innerHTML +=
+    "<li class='propria-mensagem'>" + "<div>Você diz:</div>" + formularioElementos["mensagem"].value + "</li>";
+
+  listaMensagens.scrollTop = listaMensagens.scrollHeight;
+
   formularioElementos["mensagem"].value = "";
 };
 
@@ -108,15 +111,13 @@ atualizarLista = (usuarios) => {
     } else {
       listaPessoas.innerHTML += "<li>" + usuarioNick + "</li>";
     }
-    
   });
 };
-
 
 sair = () => {
   window.open(window.location.origin, "_self");
 };
 
 limparChat = () => {
-  listaMensagens.innerHTML = '';
+  listaMensagens.innerHTML = "";
 };

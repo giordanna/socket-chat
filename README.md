@@ -2,6 +2,10 @@
 
 Um dia faço um readme mais decente.
 
+
+## Dependências
+- redis
+
 ## Instalação
 
 ```
@@ -13,6 +17,7 @@ npm i
 ## Execução
 
 ```
+redis-server
 npm run start
 ```
 ## TODO
