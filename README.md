@@ -2,10 +2,6 @@
 
 Um dia faço um readme mais decente.
 
-
-## Dependências
-- redis
-
 ## Instalação
 
 ```
@@ -19,6 +15,9 @@ npm i
 ```
 redis-server
 npm run start
+
+# ou se preferir subir com duas instâncias, se tiver pm2 instalado
+pm2 start ecosystem.config.js
 ```
 ## TODO
 - Melhorar UI no geral

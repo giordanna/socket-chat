@@ -3,9 +3,6 @@ const app = express();
 const http = require("http").createServer(app);
 const io = require("socket.io")(http);
 
-const redisAdapter = require('socket.io-redis');
-io.adapter(redisAdapter({ host: 'localhost', port: 6379 }));
-
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json()); // to support JSON-encoded bodies
