@@ -114,6 +114,8 @@ enviarMensagem = (event) => {
 };
 
 atualizarLista = (usuarios) => {
+  usuario = consultarUsuario();
+  
   listaPessoas.innerHTML = "";
   usuarios.map((usuarioNick) => {
     const newListItem = document.createElement("li");
