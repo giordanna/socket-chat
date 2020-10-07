@@ -62,31 +62,25 @@ init = () => {
 
 adicionarListeners = () => {
   socket.on("mensagem", (mensagem, usuarioNick) => {
-    listaMensagens.innerHTML +=
-      "<li><div>" + usuarioNick + " diz:</div>" + mensagem + "</li>";
-
-    listaMensagens.scrollTop = listaMensagens.scrollHeight;
+    adicionarMensagemNaLista(mensagem, usuarioNick + " diz:");
   });
 
   socket.on("user-login", (usuarioNick, roster) => {
-    listaMensagens.innerHTML +=
-      "<li class='aviso'>" + usuarioNick + " entrou na sala" + "</li>";
+    adicionarMensagemNaLista(usuarioNick + " entrou na sala", null, "aviso");
     atualizarLista(roster);
   });
 
   socket.on("user-logout", (usuarioNick, roster) => {
-    listaMensagens.innerHTML +=
-      "<li class='aviso'>" + usuarioNick + " saiu na sala" + "</li>";
+    adicionarMensagemNaLista(usuarioNick + " saiu da sala", null, "aviso");
     atualizarLista(roster);
   });
 
   socket.on("trocar-nick", (usuarioOld, usuarioNew, roster) => {
-    listaMensagens.innerHTML +=
-      "<li class='aviso'>" +
-      usuarioOld +
-      " trocou o nick para " +
-      usuarioNew +
-      "</li>";
+    adicionarMensagemNaLista(
+      usuarioOld + " trocou o nick para " + usuarioNew,
+      null,
+      "aviso"
+    );
     atualizarLista(roster);
   });
 
@@ -98,31 +92,50 @@ adicionarListeners = () => {
 enviarMensagem = (event) => {
   const formularioElementos = event.target.elements;
 
-  socket.emit(
-    "mensagem",
-    idSala,
-    formularioElementos["mensagem"].value,
-    usuario.nick
-  );
+  if (
+    formularioElementos["mensagem"].value &&
+    formularioElementos["mensagem"].value != ""
+  ) {
+    socket.emit(
+      "mensagem",
+      idSala,
+      formularioElementos["mensagem"].value,
+      usuario.nick
+    );
 
-  listaMensagens.innerHTML +=
-    "<li class='propria-mensagem'><div>Você diz:</div>" +
-    formularioElementos["mensagem"].value +
-    "</li>";
+    adicionarMensagemNaLista(
+      formularioElementos["mensagem"].value,
+      "Você diz:",
+      "propria-mensagem"
+    );
 
-  listaMensagens.scrollTop = listaMensagens.scrollHeight;
-
-  formularioElementos["mensagem"].value = "";
+    formularioElementos["mensagem"].value = "";
+  }
 };
 
 atualizarLista = (usuarios) => {
   listaPessoas.innerHTML = "";
   usuarios.map((usuarioNick) => {
+    const newListItem = document.createElement("li");
+
     if (usuario.nick === usuarioNick) {
-      listaPessoas.innerHTML += "<li>" + usuarioNick + " (você) <button onclick='trocarNick()'>Trocar Nick</button></li>";
+      const textonewListItem = document.createTextNode(usuarioNick + " (você)");
+      const buttonTrocarNick = document.createElement("button");
+
+      buttonTrocarNick.setAttribute("type", "button");
+      buttonTrocarNick.addEventListener("click", trocarNick);
+      buttonTrocarNick.innerText = "Trocar Nick";
+
+      newListItem.appendChild(textonewListItem);
+      newListItem.appendChild(buttonTrocarNick);
+
+      listaPessoas.appendChild(newListItem);
     } else {
-      listaPessoas.innerHTML += "<li>" + usuarioNick + "</li>";
+      const textonewListItem = document.createTextNode(usuarioNick);
+
+      newListItem.appendChild(textonewListItem);
     }
+    listaPessoas.appendChild(newListItem);
   });
 };
 
@@ -134,13 +147,35 @@ limparChat = () => {
   listaMensagens.innerHTML = "";
 };
 
-
+// TODO: criar troca de nick, lembrando de tratar conflitos
 trocarNick = () => {
   const nickAntigo = usuario.nick;
 
-  usuario.nick = 'teste';
+  usuario.nick = "teste";
   editarUsuario(usuario);
 
-  socket.emit("trocar-nick", idSala, nickAntigo, 'teste');
-  
+  socket.emit("trocar-nick", idSala, nickAntigo, "teste");
+};
+
+adicionarMensagemNaLista = (textoLi, textoDiv, classe) => {
+  const newListItem = document.createElement("li");
+  const textonewListItem = document.createTextNode(textoLi);
+
+  if (classe) {
+    newListItem.classList.add(classe);
+  }
+
+  if (textoDiv) {
+    const newDiv = document.createElement("div");
+    const textoNewDiv = document.createTextNode(textoDiv);
+
+    newDiv.appendChild(textoNewDiv);
+    newListItem.appendChild(newDiv);
+  }
+
+  newListItem.appendChild(textonewListItem);
+
+  listaMensagens.appendChild(newListItem);
+
+  listaMensagens.scrollTop = listaMensagens.scrollHeight;
 };
