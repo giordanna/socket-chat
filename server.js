@@ -49,7 +49,6 @@ io.on("connection", (socket) => {
 });
 
 configuraListeners = (socket) => {
-
   socket.on("disconnect", () => {
     console.log("user disconnected", socket.id, socket.handshake.query);
   });
@@ -80,18 +79,24 @@ configuraListeners = (socket) => {
     });
   });
 
-  socket.on("trocar-nick", (sala, usuarioOld, usuarioNew) => {
-    const index = salas[sala].usuarios.findIndex((id) => id === usuarioOld);
-    if (index !== -1) {
-      salas[sala].usuarios[index] = usuarioNew;
-
-      io.to(sala).emit(
-        "trocar-nick",
-        usuarioOld,
-        usuarioNew,
-        Object.values(salas[sala].usuarios)
+  socket.on("trocar-nick", (usuarioOld, usuarioNew) => {
+    // atualiza nick em todas as salas que ele existe
+    const salasKeys = Object.keys(salas);
+    salasKeys.map((salaKey) => {
+      const index = salas[salaKey].usuarios.findIndex(
+        (id) => id === usuarioOld
       );
-    }
+      if (index !== -1) {
+        salas[salaKey].usuarios[index] = usuarioNew;
+
+        io.to(salaKey).emit(
+          "trocar-nick",
+          usuarioOld,
+          usuarioNew,
+          Object.values(salas[salaKey].usuarios)
+        );
+      }
+    });
   });
 
   socket.on("mensagem", (sala, mensagem, usuario) => {
@@ -103,16 +108,26 @@ configuraListeners = (socket) => {
 app.use("/static", express.static("arquivos"));
 
 app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/arquivos/index.html");
+  return res.sendFile(__dirname + "/arquivos/index.html");
 });
 
 // chat público
 app.get("/all", (req, res) => {
-  res.sendFile(__dirname + "/arquivos/sala.html");
+  return res.sendFile(__dirname + "/arquivos/sala.html");
+});
+
+// chat público
+app.get("/privado/:sala", (req, res) => {
+  if (salas[req.params.sala]) {
+    // faz verificação de senha
+    return res.sendFile(__dirname + "/arquivos/sala.html");
+  }
+  return res.sendFile(__dirname + "/arquivos/404.html");
 });
 
 app.post("/privado", (req, res) => {
   if (req.body) {
+    // faz verificação se sala não existe
     if (!salas[req.body.id]) {
       salas[req.body.id] = {
         senha: req.body.senha,
@@ -128,7 +143,9 @@ app.post("/privado", (req, res) => {
 
 app.post("/privado/:sala", (req, res) => {
   if (req.body) {
+    // faz verificação se sala existe
     if (salas[req.params.sala]) {
+      // faz verificação de senha
       if (salas[req.params.sala].senha === req.body.senha) {
         return res.sendStatus(200);
       }
@@ -139,11 +156,28 @@ app.post("/privado/:sala", (req, res) => {
   return res.sendStatus(400);
 });
 
-app.get("/privado/:sala", (req, res) => {
-  if (salas[req.params.sala]) {
-    return res.sendFile(__dirname + "/arquivos/sala.html");
+app.put("/usuario/:nick", (req, res) => {
+  if (req.body) {
+    // faz verificação se sala existe
+    if (salas[req.body.sala.id]) {
+      // faz verificação de senha
+      if (salas[req.body.sala.id].senha === req.body.sala.hash) {
+        // faz primeira verificação, pra ver se usuário existe na sala
+        const indexVerificacao = salas[req.body.sala.id].usuarios.findIndex(
+          (id) => id === req.params.nick
+        );
+
+        // usuário existe na sala
+        if (indexVerificacao !== -1) {
+          return res.sendStatus(200);
+        }
+        return res.sendStatus(403);
+      }
+      return res.sendStatus(403);
+    }
+    return res.sendStatus(404);
   }
-  return res.sendFile(__dirname + "/arquivos/404.html");
+  return res.sendStatus(400);
 });
 
 http.listen(PORT, () => {

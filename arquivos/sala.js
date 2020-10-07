@@ -123,8 +123,9 @@ atualizarLista = (usuarios) => {
       const buttonTrocarNick = document.createElement("button");
 
       buttonTrocarNick.setAttribute("type", "button");
-      buttonTrocarNick.addEventListener("click", trocarNick);
+      buttonTrocarNick.addEventListener("click", fecharAbrirModal);
       buttonTrocarNick.innerText = "Trocar Nick";
+      buttonTrocarNick.classList.add("acao");
 
       newListItem.appendChild(textonewListItem);
       newListItem.appendChild(buttonTrocarNick);
@@ -148,13 +149,45 @@ limparChat = () => {
 };
 
 // TODO: criar troca de nick, lembrando de tratar conflitos
-trocarNick = () => {
-  const nickAntigo = usuario.nick;
+trocarNick = (event) => {
+  usuario = consultarUsuario();
 
-  usuario.nick = "teste";
-  editarUsuario(usuario);
+  const formularioElementos = event.target.elements;
+  defineDisabled(formularioElementos, true);
 
-  socket.emit("trocar-nick", idSala, nickAntigo, "teste");
+  console.log(formularioElementos["nick"].value);
+
+  fetch("/usuario/" + usuario.nick, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      nickNovo: formularioElementos["nick"].value,
+      sala: usuario.salas.find((sala) => sala.id === idSala), // para garantir que ninguém chame a API externamente
+    }),
+  })
+    .then((resp) => {
+      defineDisabled(formularioElementos, false);
+
+      if (resp.status === 200) {
+        usuario = consultarUsuario();
+        const nickOld = usuario.nick;
+        usuario.nick = formularioElementos["nick"].value;
+        editarUsuario(usuario);
+        socket.emit("trocar-nick", nickOld, usuario.nick);
+        fecharAbrirModal();
+      } else {
+        mostrarErro(resp.statusText);
+      }
+    })
+    .catch((error) => {
+      defineDisabled(formularioElementos, false);
+
+      mostrarErro(error.message);
+    });
+
+  //socket.emit("trocar-nick", idSala, nickAntigo, "teste");
 };
 
 adicionarMensagemNaLista = (textoLi, textoDiv, classe) => {
@@ -178,4 +211,51 @@ adicionarMensagemNaLista = (textoLi, textoDiv, classe) => {
   listaMensagens.appendChild(newListItem);
 
   listaMensagens.scrollTop = listaMensagens.scrollHeight;
+};
+
+fecharAbrirModal = () => {
+  const modalDom = document.getElementById("modal-nick");
+  const backdropDom = document.getElementById("backdrop-modal");
+  const inputNick = document.getElementById("nick");
+  const nickAntigoDom = document.getElementById("nick-antigo");
+
+  nickAntigoDom.innerText = usuario.nick;
+
+  if (modalDom.className.includes("aparecer")) {
+    inputNick.blur();
+
+    const errorDiv = document.getElementById("erro-form-nick");
+    errorDiv.innerHTML = "&nbsp;";
+
+    modalDom.classList.remove("aparecer");
+    backdropDom.classList.remove("aparecer");
+  } else {
+    inputNick.value = "";
+    modalDom.classList.add("aparecer");
+    backdropDom.classList.add("aparecer");
+    inputNick.focus();
+  }
+};
+
+validarSeEhMesmoNick = (event, id) => {
+  const dom = document.getElementById(id);
+
+  if (dom.innerHTML === "&nbsp;") {
+    let disableButton = false;
+
+    if (event.target.value === usuario.nick) {
+      dom.innerText = "* Não deve ser o mesmo nick antigo";
+      disableButton = true;
+    } else {
+      dom.innerHTML = "&nbsp;";
+    }
+
+    if (event.target.form) {
+      for (let i = 0; i < event.target.form.elements.length; i++) {
+        if (event.target.form.elements[i].localName === "button") {
+          event.target.form.elements[i].disabled = disableButton;
+        }
+      }
+    }
+  }
 };

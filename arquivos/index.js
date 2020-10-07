@@ -5,6 +5,7 @@ init = () => {
 };
 
 tentarEntrarChat = async (event) => {
+  usuario = consultarUsuario();
   const formularioElementos = event.target.elements;
 
   defineDisabled(formularioElementos, true);
@@ -51,6 +52,7 @@ tentarEntrarChat = async (event) => {
 };
 
 criarSalaPrivada = (event) => {
+  usuario = consultarUsuario();
   const formularioElementos = event.target.elements;
   const sala = gerarId(5);
 
@@ -70,24 +72,12 @@ criarSalaPrivada = (event) => {
       defineDisabled(formularioElementos, false);
 
       if (resp.status === 200) {
-        let usuario = JSON.parse(localStorage.getItem("usuario"));
+        usuario = consultarUsuario();
 
-        if (usuario) {
-          usuario.salas.push({
-            id: sala,
-            hash: btoa(formularioElementos["senha"].value),
-          });
-        } else {
-          usuario = {
-            nick: "anonimo_" + gerarId(5),
-            salas: [
-              {
-                id: sala,
-                hash: btoa(formularioElementos["senha"].value),
-              },
-            ],
-          };
-        }
+        usuario.salas.push({
+          id: sala,
+          hash: btoa(formularioElementos["senha"].value),
+        });
 
         editarUsuario(usuario);
 
@@ -101,38 +91,4 @@ criarSalaPrivada = (event) => {
 
       mostrarErro(error.message);
     });
-};
-
-validarCampo = (event, id) => {
-  const dom = document.getElementById(id);
-
-  if (event.target.value === "") {
-    dom.innerText = "* Campo Obrigatório";
-  } else {
-    dom.innerHTML = "&nbsp;";
-  }
-};
-
-fecharToast = () => {
-  const toastDom = document.getElementById("toast-aviso");
-
-  toastDom.classList.remove("aparecer");
-};
-
-mostrarErro = (mensagem) => {
-  const toastDom = document.getElementById("toast-aviso");
-  const toastTextDom = document.getElementById("toast-aviso-texto");
-
-  toastTextDom.innerText = mensagem;
-  toastDom.classList.add("aparecer");
-
-  setTimeout(() => {
-    toastDom.classList.remove("aparecer");
-  }, 5000);
-};
-
-defineDisabled = (elements, disabled) => {
-  for (let i = 0; i < elements.length; i++) {
-    elements[i].disabled = disabled;
-  }
 };

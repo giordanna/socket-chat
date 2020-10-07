@@ -20,8 +20,8 @@
         </article>
         <article id="sucesso" class="hidden">
           <div class="acoes">
-            <button onclick="sair()">Sair da sala</button>
-            <button onclick="limparChat()">Limpar conversa</button>
+            <button class="acao" onclick="sair()">Sair da sala</button>
+            <button class="acao" onclick="limparChat()">Limpar conversa</button>
           </div>
           <ul id="lista-mensagens"></ul>
 
@@ -46,6 +46,40 @@
         <ul id="lista-pessoas"></ul>
       </aside>
     </main>
+
+    <div
+      id="backdrop-modal"
+      class="backdrop"
+      onclick="fecharAbrirModal()"
+    ></div>
+    <div id="modal-nick" class="modal">
+      <button class="fechar" onclick="fecharAbrirModal()">&times;</button>
+      <h3>Trocar nick (anterior: <span id="nick-antigo"></span>)</h3>
+      <form
+        id="form-nick"
+        action=""
+        onsubmit="event.preventDefault(); trocarNick(event)"
+      >
+        <div class="input-group submit">
+          <label for="nick">Nick novo</label>
+          <input
+            name="nick"
+            id="nick"
+            required
+            autocomplete="off"
+            oninput="validarCampo(event, 'erro-form-nick'); validarSeEhMesmoNick(event, 'erro-form-nick')"
+            onblur="validarCampo(event, 'erro-form-nick'); validarSeEhMesmoNick(event, 'erro-form-nick')"
+          />
+          <button class="btn-dark" type="submit">Trocar</button>
+          <div id="erro-form-nick" class="error">&nbsp;</div>
+        </div>
+      </form>
+    </div>
+
+    <div id="toast-aviso" class="toast">
+      <button class="fechar" onclick="fecharToast()">&times;</button>
+      <span id="toast-aviso-texto"> </span>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script defer src="/static/service.js"></script>
